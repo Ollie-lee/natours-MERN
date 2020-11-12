@@ -11,7 +11,11 @@ const app = express();
 //  get access to the request body on the request object.
 // express.json() is also called body-parser
 app.use(express.json());
-app.use(morgan("dev"));
+
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
+
 app.use((req, res, next) => {
   //for some route handler that really needs the information about
   //when exactly the request happens.
