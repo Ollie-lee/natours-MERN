@@ -136,24 +136,49 @@ exports.createTour = async (req, res, next) => {
   // // res.send("Done"); //always need to send sth to finish request/response cycle
 };
 
-exports.patchTour = (req, res) => {
+exports.patchTour = async (req, res) => {
   //you would have to get tour from the JSON file,
   // than change that tour and then save it again to the file.
   // const { id } = req.params; // id is string
 
-  res.status(200).json({
-    status: 'successful',
-    data: {
-      tour: '<Updated tour>',
-    },
-  });
+  try {
+    const updatedTour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
+      // the new updated document is the one that will be returned.
+      new: true,
+      //run validators in the schema
+      runValidators: true,
+    });
+    res.status(200).json({
+      status: 'successful',
+      data: {
+        tour: updatedTour,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: 'fail',
+      message: 'error!!',
+    });
+  }
 };
 
-exports.deleteTour = (req, res) => {
+exports.deleteTour = async (req, res) => {
   // const { id } = req.params; // id is string
-
-  res.status(204).json({
-    status: 'successful',
-    data: null,
-  });
+  try {
+    // in a RESTful API, it is a common practice not
+    // to send back any data to the client
+    //when there was a delete operation
+    await Tour.findByIdAndDelete(req.params.id);
+    res.status(204).json({
+      status: 'successful',
+      data: {
+        tour: null,
+      },
+    });
+  } catch (error) {
+    res.status(404).json({
+      status: 'fail',
+      message: 'error',
+    });
+  }
 };
