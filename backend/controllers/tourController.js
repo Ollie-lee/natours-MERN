@@ -25,9 +25,46 @@ const Tour = require('../models/tourModel');
 exports.getAllTours = async (req, res) => {
   try {
     //find(): when we don't pass anything into it,will query for all the documents
-    const tours = await Tour.find();
+    //we can also pass a filter object
+    //first method
+    // 1) filtering
+    const queryObj = { ...req.query };
+    //these elements will not be used for query
+    const excludedFields = ['page', 'sort', 'limit', 'fields'];
+    //remove the above fields in the query obj
+    excludedFields.forEach((element) => delete queryObj[element]);
+
+    // 2) advanced filtering
+    //advanced filter obj(correct version)
+    //{difficulty:'easy',duration:{$gte:5}}
+    //but what we get: { difficulty: 'easy', duration: { gte: '5' } }
+    //so we need handle gte, gt, lte, lt
+    let queryStr = JSON.stringify(queryObj);
+    //match one of these four words and then replace it with the same words
+    //but with the dollar sign in front.
+    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+    console.log(JSON.parse(queryStr));
+
+    //build query
+    const query = Tour.find(JSON.parse(queryStr));
+
+    //second method
+    // const query =  Tour.find()
+    //   .where('duration')
+    //   .lt(5) //less than
+    //   .where('difficulty')
+    //   .equals('easy');
+
+    // console.log(req.query);
+    //execute query
+    const tours = await query;
+
+    //return an object nicely formatted with the data
+    //from the query string.
+    // console.log(req.query);
 
     //route handler
+    //send response
     res.status(200).json({
       status: 'success',
       results: tours.length,
