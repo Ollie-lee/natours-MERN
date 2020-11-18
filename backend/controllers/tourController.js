@@ -43,10 +43,10 @@ exports.getAllTours = async (req, res) => {
     //match one of these four words and then replace it with the same words
     //but with the dollar sign in front.
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-    console.log(JSON.parse(queryStr));
+    // console.log(JSON.parse(queryStr));
 
     //build query
-    const query = Tour.find(JSON.parse(queryStr));
+    let query = Tour.find(JSON.parse(queryStr));
 
     //second method
     // const query =  Tour.find()
@@ -56,6 +56,46 @@ exports.getAllTours = async (req, res) => {
     //   .equals('easy');
 
     // console.log(req.query);
+
+    //3) sorting
+    //checking if having sort in query param
+    if (req.query.sort) {
+      // console.log('req.query', req.query);
+      //split in to an array using comma as a separator than join by space to a new string
+      const sortBy = req.query.sort.split(',').join(' ');
+      // console.log('sortBy', sortBy);
+      //cuz it's a query obj, it has a bunch of built-in methods
+      //default is ascending
+      query = query.sort(sortBy);
+    } else {
+      // if no sorting field is specified, the latest createdAt document will come up first
+      query = query.sort('-createdAt');
+    }
+
+    // 4) field limiting(projecting)
+    if (req.query.fields) {
+      const fields = req.query.fields.split(',').join(' ');
+      query = query.select(fields);
+    } else {
+      //if user not specifying fields, remove some field such as "__v"
+      //add prefix "-", so it will not send __v to client
+      query = query.select('-__v');
+    }
+
+    //5) pagination
+    //skip: the amount of results that should be skipped before actually querying data.
+    //limit: amount of results that we want in the query.
+    // user wants page number two with 10 results per page.
+    //?page=2&limit=10 => 11~20
+    // skip first 10 pages, limit as 11~20
+
+    //when put a number in a query string,it will then be a string in a query object,
+    //so we need to fix that simply by multiplying by one.
+    //by default, we want page number one.
+    const page = req.query.page * 1 || 1; //convert string to number
+
+    query = query.skip(10).limit(10);
+
     //execute query
     const tours = await query;
 

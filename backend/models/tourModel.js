@@ -17,7 +17,7 @@ const tourSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  price: { type: String, required: [true, 'A tour must have price'] },
+  price: { type: Number, required: [true, 'A tour must have price'] },
   duration: {
     type: Number,
     required: [true, 'A tour must have a duration'],
@@ -60,6 +60,7 @@ const tourSchema = new mongoose.Schema({
     //which basically represents the current millisecond.
     //in Mongo,this is now immediately converted to today's datein order to make more sense of this data
     default: Date.now(),
+    select: false,
   },
   // startDates are basically different dates at which a tour starts.
   //when parsing "2021-03-21", Mongo would then automatically parse this as a date.
