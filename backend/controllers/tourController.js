@@ -1,107 +1,28 @@
 const Tour = require('../models/tourModel');
+const APIFeatures = require('../utils/apiFeatures');
 
-// // readfile outside the callback(top-level), not blocking event-loop
-// const tours = JSON.parse(
-//   //parse json to an array of js object
-//   fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`)
-// );
-
-// exports.checkId = (req, res, next, val) => {
-//   //val is the value of 'id', the param of url
-//   console.log(`Tour id is ${val}`);
-
-//   //if invalid, stop the req/res cycle
-//   if (val * 1 > tours.length) {
-//     //without return, function will not stop running invalid request
-//     return res.status(404).json({
-//       status: 'fail',
-//       message: 'Invalid ID',
-//     });
-//   }
-
-//   next();
-// };
+//the third parameter of middleware is next
+exports.aliasTopTours = (req, res, next) => {
+  //add query params to request manually
+  req.query.limit = '5';
+  req.query.sort = '-ratingsAverage,price';
+  req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+  next();
+};
 
 exports.getAllTours = async (req, res) => {
   try {
-    //find(): when we don't pass anything into it,will query for all the documents
-    //we can also pass a filter object
-    //first method
-    // 1) filtering
-    const queryObj = { ...req.query };
-    //these elements will not be used for query
-    const excludedFields = ['page', 'sort', 'limit', 'fields'];
-    //remove the above fields in the query obj
-    excludedFields.forEach((element) => delete queryObj[element]);
+    //access all methods in the class
+    // (Tour.find():from mongoose,req.query: from express)
+    //add filter() functionality to APIFeatures instance
+    //filter() also instantiate a new APIFeatures() obj, so can chain on the method
+    const features = new APIFeatures(Tour.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .pagination();
 
-    // 2) advanced filtering
-    //advanced filter obj(correct version)
-    //{difficulty:'easy',duration:{$gte:5}}
-    //but what we get: { difficulty: 'easy', duration: { gte: '5' } }
-    //so we need handle gte, gt, lte, lt
-    let queryStr = JSON.stringify(queryObj);
-    //match one of these four words and then replace it with the same words
-    //but with the dollar sign in front.
-    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-    // console.log(JSON.parse(queryStr));
-
-    //build query
-    let query = Tour.find(JSON.parse(queryStr));
-
-    //second method
-    // const query =  Tour.find()
-    //   .where('duration')
-    //   .lt(5) //less than
-    //   .where('difficulty')
-    //   .equals('easy');
-
-    // console.log(req.query);
-
-    //3) sorting
-    //checking if having sort in query param
-    if (req.query.sort) {
-      // console.log('req.query', req.query);
-      //split in to an array using comma as a separator than join by space to a new string
-      const sortBy = req.query.sort.split(',').join(' ');
-      // console.log('sortBy', sortBy);
-      //cuz it's a query obj, it has a bunch of built-in methods
-      //default is ascending
-      query = query.sort(sortBy);
-    } else {
-      // if no sorting field is specified, the latest createdAt document will come up first
-      query = query.sort('-createdAt');
-    }
-
-    // 4) field limiting(projecting)
-    if (req.query.fields) {
-      const fields = req.query.fields.split(',').join(' ');
-      query = query.select(fields);
-    } else {
-      //if user not specifying fields, remove some field such as "__v"
-      //add prefix "-", so it will not send __v to client
-      query = query.select('-__v');
-    }
-
-    //5) pagination
-    //skip: the amount of results that should be skipped before actually querying data.
-    //limit: amount of results that we want in the query.
-    // user wants page number two with 10 results per page.
-    //?page=2&limit=10 => 11~20
-    // skip first 10 pages, limit as 11~20
-
-    //when put a number in a query string,it will then be a string in a query object,
-    //so we need to fix that simply by multiplying by one.
-    //by default, we want page number one.
-    const page = req.query.page * 1 || 1; //convert string to number
-
-    query = query.skip(10).limit(10);
-
-    //execute query
-    const tours = await query;
-
-    //return an object nicely formatted with the data
-    //from the query string.
-    // console.log(req.query);
+    const tours = await features.query;
 
     //route handler
     //send response

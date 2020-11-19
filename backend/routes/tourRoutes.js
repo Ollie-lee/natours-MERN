@@ -10,6 +10,11 @@ const tourRouter = express.Router(); //tourRouter is a middleware
 // tourRouter.param('id', tourController.checkId);
 
 tourRouter
+  .route('/top-5-cheap')
+  //the request hit this route will go through two middlewares
+  .get(tourController.aliasTopTours, tourController.getAllTours);
+
+tourRouter
   .route('/')
   .get(tourController.getAllTours) //route handler, middleware, controller
   //when we have a post request for this route,
