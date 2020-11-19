@@ -26,10 +26,8 @@ class APIFeatures {
 
   sort() {
     if (this.queryString.sort) {
-      // console.log('req.query', req.query);
       //split in to an array using comma as a separator than join by space to a new string
       const sortBy = this.queryString.sort.split(',').join(' ');
-      // console.log('sortBy', sortBy);
       //cuz it's a query obj, it has a bunch of built-in methods
       //default is ascending
       this.query = this.query.sort(sortBy);

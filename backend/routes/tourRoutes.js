@@ -14,6 +14,9 @@ tourRouter
   //the request hit this route will go through two middlewares
   .get(tourController.aliasTopTours, tourController.getAllTours);
 
+//for aggregate pipeline
+tourRouter.route('/tour-stats').get(tourController.getTourStats);
+
 tourRouter
   .route('/')
   .get(tourController.getAllTours) //route handler, middleware, controller
