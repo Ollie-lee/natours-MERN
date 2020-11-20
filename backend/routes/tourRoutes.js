@@ -15,6 +15,7 @@ tourRouter
   .get(tourController.aliasTopTours, tourController.getAllTours);
 
 //for aggregate pipeline
+tourRouter.route('/monthly-plan/:year').get(tourController.getMonthlyPlan);
 tourRouter.route('/tour-stats').get(tourController.getTourStats);
 
 tourRouter
@@ -23,6 +24,7 @@ tourRouter
   //when we have a post request for this route,
   // it will then run the first middleware first and only then the createTour.
   .post(tourController.createTour);
+
 tourRouter
   .route('/:id')
   .get(tourController.getTour)

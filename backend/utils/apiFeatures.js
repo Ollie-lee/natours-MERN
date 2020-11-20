@@ -8,6 +8,7 @@ class APIFeatures {
 
   filter() {
     // 1) filtering
+    //shallow copy queryString for filtering
     const queryObj = { ...this.queryString };
     //these elements will not be used for query
     const excludedFields = ['page', 'sort', 'limit', 'fields'];

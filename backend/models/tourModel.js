@@ -33,7 +33,7 @@ const tourSchema = new mongoose.Schema({
   priceDiscount: Number,
   summary: {
     type: String,
-    //different schema for different,
+    //different schema for different type,
     // e.g. trim here will remove the space in the beginning and in the end of the string.
     trim: true,
     required: [true, 'A tour must have a summary'],

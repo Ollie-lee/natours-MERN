@@ -26,7 +26,7 @@ mongoose
   });
 
 //read json file
-const tours = JSON.parse(
+const Tours = JSON.parse(
   fs.readFileSync(`${__dirname}/tours-simple.json`, 'utf-8')
 );
 
@@ -34,7 +34,7 @@ const tours = JSON.parse(
 const importData = async () => {
   try {
     //instead of passing a obj to be create, we insert an array of obj
-    await Tour.create(tours);
+    await Tour.create(Tours);
     console.log('data successfully loaded');
   } catch (error) {
     console.log(error);
