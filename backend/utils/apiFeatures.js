@@ -19,6 +19,8 @@ class APIFeatures {
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
     //build query
+    //not want to query the tour directly here but instead,
+    //add find to the query that we already have.
     this.query = this.query.find(JSON.parse(queryStr));
 
     //return this instantiated object

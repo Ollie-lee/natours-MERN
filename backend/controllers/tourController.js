@@ -173,7 +173,7 @@ exports.getTourStats = async (req, res) => {
       },
       //sort stage
       {
-        //we cam only use filed name defined in the group stage
+        //we can only use filtered name defined in the group stage
         //1 for ascending
         $sort: { avgPrice: 1 },
       },
@@ -189,6 +189,8 @@ exports.getTourStats = async (req, res) => {
       status: 'success',
       data: {
         stats,
+        //   // match stage
+        //   //match document whose _id (now
       },
     });
   } catch (error) {
@@ -225,7 +227,7 @@ exports.getMonthlyPlan = async (req, res) => {
         },
       },
       //stage3: group stage
-      //we can add filed, but this field must use aggregate pipeline operator
+      //we can add field, but this field must use aggregate pipeline operator
       {
         $group: {
           //_id is group by what, here we extract month from "startDates"
@@ -242,7 +244,7 @@ exports.getMonthlyPlan = async (req, res) => {
           },
         },
       },
-      //stage4: addFields stage
+      //stage4: addFields stage, add a field which name is month
       {
         $addFields: {
           month: '$_id',
@@ -252,6 +254,7 @@ exports.getMonthlyPlan = async (req, res) => {
       {
         $project: {
           //0 is hidden, 1 is shown
+          //not showing id
           _id: 0,
         },
       },
