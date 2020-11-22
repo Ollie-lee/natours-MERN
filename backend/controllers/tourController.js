@@ -77,7 +77,7 @@ exports.createTour = async (req, res, next) => {
     //fail to create document, send back a response to notify
     res.status(400).json({
       status: 'fail',
-      message: 'error!!',
+      message: error,
     });
   }
 };
@@ -103,7 +103,7 @@ exports.patchTour = async (req, res) => {
   } catch (error) {
     res.status(400).json({
       status: 'fail',
-      message: 'error!!',
+      message: error,
     });
   }
 };

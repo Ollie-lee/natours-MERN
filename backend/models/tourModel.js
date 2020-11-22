@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+// const validator = require('validator');
 
 const tourSchema = new mongoose.Schema(
   //only field in the schema can be added to the database
@@ -11,11 +12,18 @@ const tourSchema = new mongoose.Schema(
       // we can not now have two tour documents with the same name
       unique: true,
       trim: true,
+      //validator specifically for string
+      maxlength: [40, 'A tour name must have less or equal than 40 characters'],
+      minlength: [10, 'A tour name must have more or equal than 10 characters'],
+      //not call the validator, just add it
+      // validate: [validator.isAlpha, 'Tour name must only contain characters'],
     },
     slug: String,
     ratingsAverage: {
       type: Number,
       default: 4.5,
+      min: [1, 'Rating must be above 1.0'],
+      max: [5, 'Rating must be below 5.0'],
     },
     ratingsQuantity: {
       type: Number,
@@ -33,8 +41,27 @@ const tourSchema = new mongoose.Schema(
     difficulty: {
       type: String,
       required: [true, 'A tour must have a difficulty'],
+      enum: {
+        values: ['easy', 'medium', 'difficult '],
+        message: 'Difficulty is either: easy, medium, difficult',
+      },
     },
-    priceDiscount: Number,
+    priceDiscount: {
+      type: Number,
+      //use regular function, cuz we need to access "this" points to the current document
+      validate: {
+        validator: function (val) {
+          //The price discount should always be lower.
+          //false will trigger a validation error
+          //caveat: "this" key word is only gonna point to the current document
+          //when we are creating a NEW document.
+          //So this validator here is not going to work on update.
+          return val < this.price;
+        },
+        //{VALUE} is specific to mongoose, which is "val"
+        message: 'Discount price ({VALUE}) should be below regular price',
+      },
+    },
     summary: {
       type: String,
       //different schema for different type,
@@ -93,7 +120,8 @@ tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
 });
 
-//DOCUMENT MIDDLEWARE: runs before .save() and .create(), but not be triggered for insertMany()
+//DOCUMENT MIDDLEWARE: runs before .save() and .create(),
+// but not be triggered for insertMany() or update()...etc
 // A Pre Save Hook/Middleware
 tourSchema.pre(
   //event in this case is the save event.
