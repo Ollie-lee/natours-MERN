@@ -33,4 +33,13 @@ app.use(express.static(`${__dirname}/public`));
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 
+//fall back route, for uncaught routes
+app.all('*', (req, res, next) => {
+  res.status(404).json({
+    status: 'fail',
+    //which is as the name says, the URL that was requested
+    message: `can't find ${req.originalUrl} on the server`,
+  });
+});
+
 module.exports = app;
