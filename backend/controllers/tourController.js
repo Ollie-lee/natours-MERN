@@ -1,5 +1,7 @@
 const Tour = require('../models/tourModel');
 const APIFeatures = require('../utils/apiFeatures');
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
 
 //the third parameter of middleware is next
 exports.aliasTopTours = (req, res, next) => {
@@ -42,92 +44,95 @@ exports.getAllTours = async (req, res) => {
   }
 };
 
-exports.getTour = async (req, res) => {
-  try {
-    // id from url parameter
-    //Tour.findById is shorthand for Tour.findOne({_id:req.params.id}),inside is filter obj
-    const tour = await Tour.findById(req.params.id);
-    res.status(200).json({
-      status: 'success',
-      data: {
-        tour,
-      },
-    });
-  } catch (error) {
-    res.status(404).json({
-      status: 'fail',
-      message: error,
-    });
-  }
-};
+exports.getTour = catchAsync(async (req, res, next) => {
+  // id from url parameter
+  //Tour.findById is shorthand for Tour.findOne({_id:req.params.id}),inside is filter obj
+  const tour = await Tour.findById(req.params.id, (err) => {
+    if (err) {
+      //stop execution, not move on to the next line
+      return next(new AppError('No tour found with that ID', 404));
+    }
+  });
 
-exports.createTour = async (req, res, next) => {
-  try {
-    //return a promise as well
-    //using data comes from post request
-    //newTour:  the newly created document already with the ID and everything
-    const newTour = await Tour.create(req.body);
-    res.status(201).json({
-      status: 'success',
-      data: {
-        tour: newTour,
-      },
-    });
-  } catch (error) {
-    //fail to create document, send back a response to notify
-    res.status(400).json({
-      status: 'fail',
-      message: error,
-    });
-  }
-};
+  res.status(200).json({
+    status: 'success',
+    data: {
+      tour,
+    },
+  });
+});
 
-exports.patchTour = async (req, res) => {
+exports.createTour = catchAsync(async (req, res, next) => {
+  //return a promise as well
+  //using data comes from post request
+  //newTour:  the newly created document already with the ID and everything
+  const newTour = await Tour.create(req.body);
+  res.status(201).json({
+    status: 'success',
+    data: {
+      tour: newTour,
+    },
+  });
+
+  // try {
+
+  // } catch (error) {
+  //   //fail to create document, send back a response to notify
+  //   res.status(400).json({
+  //     status: 'fail',
+  //     message: error,
+  //   });
+  // }
+});
+
+exports.patchTour = catchAsync(async (req, res, next) => {
   //you would have to get tour from the JSON file,
   // than change that tour and then save it again to the file.
   // const { id } = req.params; // id is string
 
-  try {
-    const updatedTour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
+  const updatedTour = await Tour.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    {
       // the new updated document is the one that will be returned.
       new: true,
       //run validators in the schema
       runValidators: true,
-    });
-    res.status(200).json({
-      status: 'successful',
-      data: {
-        tour: updatedTour,
-      },
-    });
-  } catch (error) {
-    res.status(400).json({
-      status: 'fail',
-      message: error,
-    });
-  }
-};
+    },
+    (err) => {
+      if (err) {
+        //stop execution, not move on to the next line
+        return next(new AppError('No tour found with that ID', 404));
+      }
+    }
+  );
+  res.status(200).json({
+    status: 'successful',
+    data: {
+      tour: updatedTour,
+    },
+  });
+});
 
-exports.deleteTour = async (req, res) => {
+exports.deleteTour = catchAsync(async (req, res, next) => {
   // const { id } = req.params; // id is string
-  try {
-    // in a RESTful API, it is a common practice not
-    // to send back any data to the client
-    //when there was a delete operation
-    await Tour.findByIdAndDelete(req.params.id);
-    res.status(204).json({
-      status: 'successful',
-      data: {
-        tour: null,
-      },
-    });
-  } catch (error) {
-    res.status(404).json({
-      status: 'fail',
-      message: 'error',
-    });
-  }
-};
+
+  // in a RESTful API, it is a common practice not
+  // to send back any data to the client
+  //when there was a delete operation
+  await Tour.findByIdAndDelete(req.params.id, (err) => {
+    if (err) {
+      //stop execution, not move on to the next line
+      return next(new AppError('No tour found with that ID', 404));
+    }
+  });
+  res.status(204).json({
+    status: 'successful',
+    data: {
+      tour: null,
+    },
+  });
+});
 
 //aggregation pipeline
 exports.getTourStats = async (req, res) => {
