@@ -47,12 +47,12 @@ exports.getAllTours = async (req, res) => {
 exports.getTour = catchAsync(async (req, res, next) => {
   // id from url parameter
   //Tour.findById is shorthand for Tour.findOne({_id:req.params.id}),inside is filter obj
-  const tour = await Tour.findById(req.params.id, (err) => {
-    if (err) {
-      //stop execution, not move on to the next line
-      return next(new AppError('No tour found with that ID', 404));
-    }
-  });
+  const tour = await Tour.findById(req.params.id);
+
+  if (!tour) {
+    //stop execution, not move on to the next line
+    return next(new AppError('No tour found with that ID', 404));
+  }
 
   res.status(200).json({
     status: 'success',
@@ -90,22 +90,18 @@ exports.patchTour = catchAsync(async (req, res, next) => {
   // than change that tour and then save it again to the file.
   // const { id } = req.params; // id is string
 
-  const updatedTour = await Tour.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    {
-      // the new updated document is the one that will be returned.
-      new: true,
-      //run validators in the schema
-      runValidators: true,
-    },
-    (err) => {
-      if (err) {
-        //stop execution, not move on to the next line
-        return next(new AppError('No tour found with that ID', 404));
-      }
-    }
-  );
+  const updatedTour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
+    // the new updated document is the one that will be returned.
+    new: true,
+    //run validators in the schema
+    runValidators: true,
+  });
+
+  if (!updatedTour) {
+    //stop execution, not move on to the next line
+    return next(new AppError('No tour found with that ID', 404));
+  }
+
   res.status(200).json({
     status: 'successful',
     data: {
@@ -120,12 +116,13 @@ exports.deleteTour = catchAsync(async (req, res, next) => {
   // in a RESTful API, it is a common practice not
   // to send back any data to the client
   //when there was a delete operation
-  await Tour.findByIdAndDelete(req.params.id, (err) => {
-    if (err) {
-      //stop execution, not move on to the next line
-      return next(new AppError('No tour found with that ID', 404));
-    }
-  });
+  const tour = await Tour.findByIdAndDelete(req.params.id);
+
+  if (!tour) {
+    //stop execution, not move on to the next line
+    return next(new AppError('No tour found with that ID', 404));
+  }
+
   res.status(204).json({
     status: 'successful',
     data: {
