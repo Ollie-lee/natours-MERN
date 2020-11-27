@@ -1,6 +1,7 @@
 const express = require('express');
 
 const tourController = require('../controllers/tourController');
+const authController = require('../controllers/authController');
 
 const tourRouter = express.Router(); //tourRouter is a middleware
 
@@ -20,7 +21,7 @@ tourRouter.route('/tour-stats').get(tourController.getTourStats);
 
 tourRouter
   .route('/')
-  .get(tourController.getAllTours) //route handler, middleware, controller
+  .get(authController.protect, tourController.getAllTours) //route handler, middleware, controller
   //when we have a post request for this route,
   // it will then run the first middleware first and only then the createTour.
   .post(tourController.createTour);
