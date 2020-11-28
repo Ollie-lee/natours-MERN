@@ -1,3 +1,4 @@
+const util = require('util');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
@@ -23,6 +24,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     email: req.body.email,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
+    passwordChangedAt: req.body.passwordChangedAt,
   });
 
   //when user signup, we want them sign in automatically, so we issue the token
@@ -75,10 +77,6 @@ exports.protect = catchAsync(async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     token = req.headers.authorization.split(' ')[1];
-    console.log(
-      '🚀 ~ file: authController.js ~ line 78 ~ exports.protect=catchAsync ~ token',
-      token
-    );
   }
 
   if (!token) {
@@ -88,10 +86,36 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   //2) Verification token
+  //check if is modified or expired
+  const decoded = await util.promisify(
+    //grab token's head and payload with env's secret to check
+    //verify received the third argument which is a callback, we
+    //use promisefy to avoid callback hell
+    jwt.verify
+  )(token, process.env.JWT_SECRET);
 
   //3) check if user still exists
+  //verify process make sure the id is correct
+  const freshUser = await User.findById(decoded.id);
+
+  if (!freshUser) {
+    return next(
+      new AppError(
+        'The user belonging to this token does no longer exist.',
+        401
+      )
+    );
+  }
 
   //4) check if user changed password after JWT was issued
+  //iat: issue at
+  if (freshUser.changePasswordAfter(decoded.iat)) {
+    return next(
+      new AppError('User recently changed password! Please log in again!', 401)
+    );
+  }
 
+  //grant access to the protected route
+  req.user = freshUser; //can be used in the other middleware
   next();
 });

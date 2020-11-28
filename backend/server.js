@@ -6,6 +6,8 @@
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 
+//not need server, so can be put on the top
+//find some tool to restart in production
 //handle exception globally
 process.on('uncaughtException', (err) => {
   console.log('Unhandled Exception!');

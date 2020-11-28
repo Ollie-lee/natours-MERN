@@ -16,6 +16,12 @@ const handleValidationErrorDB = (err) => {
   return new AppError(message, 400);
 };
 
+const handleJWTError = () =>
+  new AppError('Invalid token. Please login again.', 401);
+
+const handleJWTExpiredError = () =>
+  new AppError('Your token has expired! please log in again!', 401);
+
 const sendErrorDev = (err, res) => {
   //make development error detailed
   res.status(err.statusCode).json({
@@ -58,23 +64,33 @@ module.exports = (err, req, res, next) => {
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === 'production') {
     //make some unoperational error to operational error
-    let error = { ...err };
+    // let error = JSON.parse(JSON.stringify(err));
+    // console.log('🚀 ~ file: errorController.js ~ line 68 ~ err', err);
+    // console.log('🚀 ~ file: errorController.js ~ line 69 ~ error', error);
 
     if (err.constructor.name === 'CastError') {
       //for invalid query id
       //return a new error created withAppError class, become operational
-      error = handleCastErrorDB(error);
+      err = handleCastErrorDB(err);
     }
 
     if (err.constructor.name === 'ValidationError') {
       //for validator error, which is an mongoose error
-      error = handleValidationErrorDB(error);
+      err = handleValidationErrorDB(err);
+    }
+
+    if (err.name === 'JsonWebTokenError') {
+      err = handleJWTError(err);
+    }
+
+    if (err.name === 'TokenExpiredError') {
+      err = handleJWTExpiredError(err);
     }
 
     if (err.code === 11000) {
       //for duplicate "unique" field
-      error = handleDuplicateFieldsDB(error);
+      err = handleDuplicateFieldsDB(err);
     }
-    sendErrorProd(error, res);
+    sendErrorProd(err, res);
   }
 };
