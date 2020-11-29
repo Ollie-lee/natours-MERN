@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const sendEmail = require('../utils/email');
 
 const signToken = (id) => {
   return jwt.sign(
@@ -148,7 +149,42 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
   //we just modify the document's data, but not save into the database, so save it
   //deactivate all the validators, so no need to provide required field
   await user.save({ validateBeforeSave: false });
+
   // 3)send it to user's email
+  //So we're basically preparing this one here to work both in development and in production.
+  const resetURL = `${req.protocol}://${req.get(
+    'host'
+  )}/api/v1/users/resetPassword/${resetToken}`;
+
+  const message = `Forgot your password? Submit a PATCH request with your new password and passConfirm to: 
+  ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
+
+  //do more than send a error back
+  try {
+    //pass option
+    sendEmail({
+      email: user.email,
+      subject: 'Your password reset token(Valid for 10 min)',
+      message,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Token sent to email!',
+    });
+  } catch (error) {
+    //reset both the token and the expires property.
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    // save data in database
+    await user.save({ validateBeforeSave: false });
+    return next(
+      new AppError(
+        'There was an error sending the email. Try again later.',
+        500
+      )
+    );
+  }
 });
 
 exports.resetPassword = catchAsync(async (req, res, next) => {});

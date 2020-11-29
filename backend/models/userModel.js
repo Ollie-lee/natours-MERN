@@ -103,7 +103,6 @@ userSchema.methods.createPasswordResetToken = function () {
   // password reset token should basically be a random string
   //but no need to be hashed
   const resetToken = crypto.randomBytes(32).toString('hex');
-  console.log('🚀 ~ file: userModel.js ~ line 106 ~ resetToken', resetToken);
 
   //be saved into database, used to be compared with incoming token user provided
   //similar with password
@@ -111,11 +110,6 @@ userSchema.methods.createPasswordResetToken = function () {
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
-
-  console.log(
-    '🚀 ~ file: userModel.js ~ line 111 ~ this.passwordResetToken',
-    this.passwordResetToken
-  );
 
   //10 min, unit is million seconds
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;

@@ -13,7 +13,7 @@ userRouter.post('/login', authController.login);
 //only receive the email address
 userRouter.post('/forgotPassword', authController.forgetPassword);
 //receive the token as well as the new password.
-userRouter.post('/resetPassword', authController.resetPassword);
+userRouter.patch('/resetPassword/:token', authController.resetPassword);
 
 //User Route
 //can be used for admin
