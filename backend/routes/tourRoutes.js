@@ -30,6 +30,14 @@ tourRouter
   .route('/:id')
   .get(tourController.getTour)
   .patch(tourController.patchTour)
-  .delete(tourController.deleteTour);
+  //always check if a user is logged in
+  //only admin and lead-guide can delete a tour
+  .delete(
+    authController.protect,
+    //protect middle also exposes fresh/current user to next middleware
+    //this function return a middleware function
+    authController.restrictTo('admin', 'lead-guide'),
+    tourController.deleteTour
+  );
 
 module.exports = tourRouter; //only for export single file, middleware here

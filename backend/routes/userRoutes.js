@@ -10,6 +10,11 @@ const userRouter = express.Router();
 userRouter.post('/signup', authController.signup);
 userRouter.post('/login', authController.login);
 
+//only receive the email address
+userRouter.post('/forgotPassword', authController.forgetPassword);
+//receive the token as well as the new password.
+userRouter.post('/resetPassword', authController.resetPassword);
+
 //User Route
 //can be used for admin
 userRouter

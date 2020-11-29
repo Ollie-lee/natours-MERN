@@ -25,6 +25,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
     passwordChangedAt: req.body.passwordChangedAt,
+    role: req.body.role,
   });
 
   //when user signup, we want them sign in automatically, so we issue the token
@@ -119,3 +120,35 @@ exports.protect = catchAsync(async (req, res, next) => {
   req.user = freshUser; //can be used in the other middleware
   next();
 });
+
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    //roles is an array, ['admin','lead-guide]
+    //only specified roles can access protected routes
+    //req.user.role is exposed by the above middleware
+    if (!roles.includes(req.user.role)) {
+      return next(
+        //403 means forbidden
+        new AppError('You do not have permission to perform this action', 403)
+      );
+    }
+    next();
+  };
+};
+
+exports.forgetPassword = catchAsync(async (req, res, next) => {
+  // 1) get user based on Posted email
+  const user = await User.findOne({ email: req.body.email });
+  if (!user) {
+    return next(new AppError('There is no user with email address'), 404);
+  }
+  //2) generate the random reset token
+  //has to do with user data itself, so put a instance method in model
+  const resetToken = user.createPasswordResetToken();
+  //we just modify the document's data, but not save into the database, so save it
+  //deactivate all the validators, so no need to provide required field
+  await user.save({ validateBeforeSave: false });
+  // 3)send it to user's email
+});
+
+exports.resetPassword = catchAsync(async (req, res, next) => {});

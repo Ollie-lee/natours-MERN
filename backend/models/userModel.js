@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -17,6 +18,11 @@ const userSchema = new mongoose.Schema({
     validate: [validator.isEmail, 'Please provide a valid email'],
   },
   photo: String,
+  role: {
+    type: String,
+    enum: ['user', 'guide', 'lead-guide', 'admin'],
+    default: 'user',
+  },
   password: {
     type: String,
     required: [true, 'Please provide a password'],
@@ -41,6 +47,8 @@ const userSchema = new mongoose.Schema({
     },
   },
   passwordChangedAt: Date,
+  passwordResetToken: String,
+  passwordResetExpires: Date,
 });
 
 //document pre save hook
@@ -89,6 +97,31 @@ userSchema.methods.changePasswordAfter = function (JWTTimestamp) {
   }
 
   //false means NOT changed
+};
+
+userSchema.methods.createPasswordResetToken = function () {
+  // password reset token should basically be a random string
+  //but no need to be hashed
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  console.log('🚀 ~ file: userModel.js ~ line 106 ~ resetToken', resetToken);
+
+  //be saved into database, used to be compared with incoming token user provided
+  //similar with password
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  console.log(
+    '🚀 ~ file: userModel.js ~ line 111 ~ this.passwordResetToken',
+    this.passwordResetToken
+  );
+
+  //10 min, unit is million seconds
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+
+  //token sent by the email
+  return resetToken;
 };
 
 const User = mongoose.model('User', userSchema);
