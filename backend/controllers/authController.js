@@ -1,5 +1,6 @@
 const util = require('util');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
@@ -145,10 +146,12 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
   }
   //2) generate the random reset token
   //has to do with user data itself, so put a instance method in model
+  //set passwordResetExpires btw
   const resetToken = user.createPasswordResetToken();
   //we just modify the document's data, but not save into the database, so save it
   //deactivate all the validators, so no need to provide required field
   await user.save({ validateBeforeSave: false });
+  // await user.save();
 
   // 3)send it to user's email
   //So we're basically preparing this one here to work both in development and in production.
@@ -187,4 +190,65 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
   }
 });
 
-exports.resetPassword = catchAsync(async (req, res, next) => {});
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  // 1) get user based on the token
+  //hash the token in the url parameter to check the equality in database
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(req.params.token)
+    .digest('hex');
+
+  //token is the only thing we can query user
+  //find the user for the token and also check if the token has not yet expired at the same time
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    //great than now means future
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  // 2) if token has not expired, and there is a user, set the new password
+  if (!user) {
+    return next(new AppError('Token is invalid or has expired', 400));
+  }
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  //we did not turn off validators here, cuz we need it, e.g. password = passwordConfirm
+  //we use save() to trigger "save" hook
+  await user.save();
+  // 3) update changePasswordAt property for the current user
+  //implemented by pre save hook in model
+
+  //4) log the user in, send JWT to client
+  const token = signToken(user._id);
+
+  res.status(200).json({
+    status: 'success',
+    token,
+  });
+});
+
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  //only for logged in users
+  // 1) get user from collection
+  //req.user.id is also available
+  const user = await User.findById(req.user._id).select('+password');
+  // 2) if the posted password is correct.
+  if (!(await user.correctPassword(req.body.passwordCurrent, user.password))) {
+    return next(new AppError('Your current password is wrong.', 401));
+  }
+  // 3) update password
+  user.password = req.body.passwordCurrent;
+  user.passwordConfirm = req.body.passwordConfirm;
+  await user.save();
+  //why not using findByIdAndUpdate()?
+  //1 passwordConfirm customer validator will not be triggered
+  //2 pre save hook will not work
+  // 4) log user in, send JWT, logged in with the new password that was just updated.
+  const token = signToken(user._id);
+  res.status(200).json({
+    status: 'success',
+    token,
+  });
+});

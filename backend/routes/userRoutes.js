@@ -15,6 +15,15 @@ userRouter.post('/forgotPassword', authController.forgetPassword);
 //receive the token as well as the new password.
 userRouter.patch('/resetPassword/:token', authController.resetPassword);
 
+userRouter.patch(
+  '/updateMyPassword',
+  authController.protect,
+  authController.updatePassword
+);
+
+userRouter.patch('/updateMe', authController.protect, userController.updateMe);
+userRouter.delete('/deleteMe', authController.protect, userController.deleteMe);
+
 //User Route
 //can be used for admin
 userRouter

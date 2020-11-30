@@ -33,12 +33,13 @@ const userSchema = new mongoose.Schema({
   passwordConfirm: {
     type: String,
     // it's a required input, not required to be persisted to the database
-    required: [true, 'Please confirm your password'],
+    required: [true, 'Please  confirm your password'],
     validate: {
       validator: function (el) {
         //a call back return true or false
         //el is passwordConfirm
-        //only useful(this points to current doc) for create a NEW user,
+        //this.password is not defined when update
+        //only useful("this" points to current doc) for create a NEW user,
         //using SAVE/CREATE
         // so that not for update
         return el === this.password;
@@ -49,6 +50,11 @@ const userSchema = new mongoose.Schema({
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,
+  active: {
+    type: Boolean,
+    default: true,
+    select: false,
+  },
 });
 
 //document pre save hook
@@ -70,6 +76,30 @@ userSchema.pre('save', async function (next) {
   //after this validation was successful,
   //we actually no longer need this field
   this.passwordConfirm = undefined;
+  next();
+});
+
+//update passwordChangedAt property
+userSchema.pre('save', function (next) {
+  //only want manipulate the "passwordChangedAt" when we actually modified the password property.
+  //when create a new document, then we did actually modify the password,
+  // but here we don't want to trigger this hook when creating a new doc
+  if (!this.isModified('password') || this.isNew) {
+    return next();
+  }
+
+  // -1s to make up the saving time offset
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
+//something that will happen before a query and that query will be a find.
+userSchema.pre(/^find/, function (next) {
+  // "this" points to the current query
+  //before that query is actually executed, we want to add something to it.
+  //Which is that we only want to find documents which have the active property set to true.
+  //  this.find({ active: true });
+  this.find({ active: { $ne: false } }); //true + unspecified
   next();
 });
 

@@ -137,6 +137,7 @@ tourSchema.pre(
 );
 
 //QUERY MIDDLEWARE
+//not just find but also stuff like find and update, find and delete, and all queries like that.
 tourSchema.pre(/^find/, function (next) {
   //this keyword will now point at the current query and not at the current document,
   // create a secret tour field and then query only for tours that are not secret.
