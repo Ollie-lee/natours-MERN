@@ -42,7 +42,7 @@ const tourSchema = new mongoose.Schema(
       type: String,
       required: [true, 'A tour must have a difficulty'],
       enum: {
-        values: ['easy', 'medium', 'difficult '],
+        values: ['easy', 'medium', 'difficult'],
         message: 'Difficulty is either: easy, medium, difficult',
       },
     },
@@ -101,6 +101,35 @@ const tourSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    startLocation: {
+      //GeoJSON,field: type and coordinates are necessary
+      //the schema declaration obj above now become sub-obj now
+      //startLocation can also be the first element in the location array
+      type: {
+        type: String,
+        default: 'Point',
+        enum: ['Point'],
+      },
+      //expect an array of numbers
+      coordinates: [Number],
+      address: String,
+      description: String,
+    },
+    locations: [
+      //by specifying basically an array of objects,
+      //this will then create brand new documents in side of parent document
+      {
+        type: {
+          type: String,
+          default: 'Point',
+          enum: ['Point'],
+        },
+        coordinates: [Number],
+        address: String,
+        description: String,
+        day: Number,
+      },
+    ],
   },
   //add schema obj as second parameter of Schema constructor
   {
