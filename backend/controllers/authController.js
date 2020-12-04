@@ -19,6 +19,40 @@ const signToken = (id) => {
   );
 };
 
+const createSendToken = (user, statusCode, res) => {
+  const token = signToken(user._id);
+
+  const cookieOptions = {
+    //the browser or the client in general will delete the cookie after it has expired.
+    //1s = 1000 milliseconds
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
+
+    // cookie cannot be accessed or modified in any way by the browser.
+    //prevent those cross-site scripting attacks.
+    httpOnly: true,
+  };
+
+  if (process.env.NODE_ENV === 'production') {
+    //the cookie will only be sent on an encrypted connection. So basically, we're only using HTTPS
+    cookieOptions.secure = true;
+  }
+
+  res.cookie('jwt', token, cookieOptions);
+
+  //some user comes from create, not select, so hide password in the schema have no effect
+  user.password = undefined;
+
+  res.status(statusCode).json({
+    status: 'success',
+    token,
+    data: {
+      user,
+    },
+  });
+};
+
 //equals to create user in the authentication context
 exports.signup = catchAsync(async (req, res, next) => {
   const newUser = await User.create({
@@ -31,16 +65,18 @@ exports.signup = catchAsync(async (req, res, next) => {
   });
 
   //when user signup, we want them sign in automatically, so we issue the token
-  const token = signToken(newUser._id);
+  // const token = signToken(newUser._id);
 
-  res.status(201).json({
-    status: 'success',
-    //sending the token to the client
-    token,
-    data: {
-      user: newUser,
-    },
-  });
+  // res.status(201).json({
+  //   status: 'success',
+  //   //sending the token to the client
+  //   token,
+  //   data: {
+  //     user: newUser,
+  //   },
+  // });
+
+  createSendToken(newUser, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -65,11 +101,13 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   //3) if every thing is ok, send JWT to client
-  const token = signToken(user._id);
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  // const token = signToken(user._id);
+  // res.status(200).json({
+  //   status: 'success',
+  //   token,
+  // });
+
+  createSendToken(user, 200, res);
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -221,12 +259,14 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   //implemented by pre save hook in model
 
   //4) log the user in, send JWT to client
-  const token = signToken(user._id);
+  // const token = signToken(user._id);
 
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  // res.status(200).json({
+  //   status: 'success',
+  //   token,
+  // });
+
+  createSendToken(user, 200, res);
 });
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
@@ -246,9 +286,12 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   //1 passwordConfirm customer validator will not be triggered
   //2 pre save hook will not work
   // 4) log user in, send JWT, logged in with the new password that was just updated.
-  const token = signToken(user._id);
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+
+  // const token = signToken(user._id);
+  // res.status(200).json({
+  //   status: 'success',
+  //   token,
+  // });
+
+  createSendToken(user, 200, res);
 });
