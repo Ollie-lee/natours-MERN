@@ -9,6 +9,7 @@ const hpp = require('hpp');
 //middleware(sub app)
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
+const reviewRouter = require('./routes/reviewRoutes');
 const globalErrorHandler = require('./controllers/errorController');
 const AppError = require('./utils/appError');
 
@@ -93,6 +94,9 @@ app.use(express.static(`${__dirname}/public`));
 // mounting a new router on a route
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
+//whenever there is a request with a url that starts like this
+//then this middleware function here will basically be called.
+app.use('/api/v1/reviews', reviewRouter);
 
 //fall back route, for uncaught routes
 app.all('*', (req, res, next) => {

@@ -159,6 +159,20 @@ tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
 });
 
+//virtual populate
+//name of virtual field
+tourSchema.virtual('reviews', {
+  //name of Model
+  ref: 'Review',
+  //this is the name of the field in the other model
+  //So in the Review model in this case,
+  //where the reference to the current model is stored.
+  //in order to connect these two models
+  foreignField: 'tour',
+  //where that ID is actually stored here in this current Tour model.
+  localField: '_id',
+});
+
 //DOCUMENT MIDDLEWARE: runs before .save() and .create(),
 // but not be triggered for insertMany() or update()...etc
 // A Pre Save Hook/Middleware

@@ -48,7 +48,8 @@ exports.getTour = catchAsync(async (req, res, next) => {
   // id from url parameter
   //Tour.findById is shorthand for Tour.findOne({_id:req.params.id}),inside is filter obj
 
-  const tour = await Tour.findById(req.params.id);
+  //only populate review field for getTour route
+  const tour = await Tour.findById(req.params.id).populate('reviews');
 
   if (!tour) {
     //stop execution, not move on to the next line
