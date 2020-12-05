@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+// const User = require('./userModel');
 // const validator = require('validator');
 
 const tourSchema = new mongoose.Schema(
@@ -130,6 +131,15 @@ const tourSchema = new mongoose.Schema(
         day: Number,
       },
     ],
+    // these will be some sub-documents.So embedded documents.
+    guides: [
+      {
+        // we expect a type of each of the elements in the guides array to be a MongoDB ID.
+        type: mongoose.Schema.ObjectId,
+        //this really is how we establish references between different data sets in Mongoose.
+        ref: 'User',
+      },
+    ],
   },
   //add schema obj as second parameter of Schema constructor
   {
@@ -165,8 +175,19 @@ tourSchema.pre(
   }
 );
 
+//for embedding
+// tourSchema.pre('save', async function (next) {
+//   //this.guides is an array of all the user IDs
+//   //async returns a promise
+//   const guidesPromises = this.guides.map(async (id) => await User.findById(id));
+//   //override that array of IDs with an array of user documents
+//   //here add outer function(next) as async
+//   this.guides = await Promise.all(guidesPromises);
+//   next();
+// });
+
 //QUERY MIDDLEWARE
-//not just find but also stuff like find and update, find and delete, and all queries like that.
+//not just find but also stuff like findAndUpdate, findAndDelete, and all queries like that.
 tourSchema.pre(/^find/, function (next) {
   //this keyword will now point at the current query and not at the current document,
   // create a secret tour field and then query only for tours that are not secret.
@@ -182,6 +203,17 @@ tourSchema.pre(/^find/, function (next) {
 tourSchema.post(/^find/, function (docs, next) {
   console.log(`Query took ${Date.now() - this.start} milliseconds`);
   // console.log(docs);
+  next();
+});
+
+//guides field only contains reference, so we want to populate it
+//for query like, find, but also stuff like findAndUpdate, findAndDelete etc..., but not in the database
+tourSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'guides',
+    //hides __v and passwordChangedAt field in the guides field
+    select: '-__v -passwordChangedAt',
+  });
   next();
 });
 

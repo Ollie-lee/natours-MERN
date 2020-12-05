@@ -47,6 +47,7 @@ exports.getAllTours = async (req, res) => {
 exports.getTour = catchAsync(async (req, res, next) => {
   // id from url parameter
   //Tour.findById is shorthand for Tour.findOne({_id:req.params.id}),inside is filter obj
+
   const tour = await Tour.findById(req.params.id);
 
   if (!tour) {
