@@ -2,8 +2,19 @@ const express = require('express');
 
 const tourController = require('../controllers/tourController');
 const authController = require('../controllers/authController');
+const reviewRouter = require('./reviewRoutes');
 
 const tourRouter = express.Router(); //tourRouter is a middleware
+
+//nested route
+//post /tours/xxxx/reviews
+//get /tours/xxx/reviews
+//get /tours/xxx/reviews/xxx
+
+// this tour router should use the review router in case it ever encounters a route like this.
+//similar in app.js, so why it's called sub app
+//enable the review router to actually get access to this parameter here as well.
+tourRouter.use('/:tourId/reviews', reviewRouter);
 
 //define param middleware, will be triggered if "/api/v1/tours/:id"
 //'id' is specified param

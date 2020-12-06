@@ -3,7 +3,15 @@ const express = require('express');
 const reviewController = require('../controllers/reviewController');
 const authController = require('../controllers/authController');
 
-const reviewRouter = express.Router();
+//specify option such as merge params
+const reviewRouter = express.Router({
+  // by default, each router only have access to the parameters of their specific routes
+  //there is not tour id in this post route, so we need merge the parameters in tourRoutes
+  mergeParams: true,
+});
+
+//post /tours/xxxx/reviews
+//post /reviews
 
 reviewRouter
   .route('/')

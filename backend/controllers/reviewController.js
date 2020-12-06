@@ -14,6 +14,16 @@ exports.getAllReviews = catchAsync(async (req, res, next) => {
 });
 
 exports.createReview = catchAsync(async (req, res, next) => {
+  //allow nested routes
+  if (!req.body.tour) {
+    //come from url
+    req.body.tour = req.params.tourId;
+  }
+
+  if (!req.body.user) {
+    //from protect middleware
+    req.body.user = req.user.id;
+  }
   //any field not belong to review schema, will be ignored
   const newReview = await Review.create(req.body);
 
