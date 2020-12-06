@@ -1,8 +1,15 @@
 const Review = require('../models/reviewModel');
 const catchAsync = require('../utils/catchAsync');
+const factory = require('./handlerFactory');
 
 exports.getAllReviews = catchAsync(async (req, res, next) => {
-  const reviews = await Review.find();
+  //for nested route
+  let filter = {};
+  //thanks for params merging in review router
+  if (req.params.tourId) {
+    filter = { tour: req.params.tourId };
+  }
+  const reviews = await Review.find(filter);
 
   res.status(200).json({
     status: 'success',
@@ -13,7 +20,8 @@ exports.getAllReviews = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createReview = catchAsync(async (req, res, next) => {
+// an middleware added in routes
+exports.setTourUserIds = (req, res, next) => {
   //allow nested routes
   if (!req.body.tour) {
     //come from url
@@ -24,13 +32,24 @@ exports.createReview = catchAsync(async (req, res, next) => {
     //from protect middleware
     req.body.user = req.user.id;
   }
-  //any field not belong to review schema, will be ignored
-  const newReview = await Review.create(req.body);
 
-  res.status(201).json({
-    status: 'success',
-    data: {
-      review: newReview,
-    },
-  });
-});
+  next();
+};
+
+exports.createReview = factory.createOne(Review);
+
+// exports.createReview = catchAsync(async (req, res, next) => {
+//   //any field not belong to review schema, will be ignored
+//   const newReview = await Review.create(req.body);
+
+//   res.status(201).json({
+//     status: 'success',
+//     data: {
+//       review: newReview,
+//     },
+//   });
+// });
+
+exports.deleteReview = factory.deleteOne(Review);
+
+exports.updateReview = factory.updateOne(Review);

@@ -1,7 +1,6 @@
 const Tour = require('../models/tourModel');
 const APIFeatures = require('../utils/apiFeatures');
-const catchAsync = require('../utils/catchAsync');
-const AppError = require('../utils/appError');
+const factory = require('./handlerFactory');
 
 //the third parameter of middleware is next
 exports.aliasTopTours = (req, res, next) => {
@@ -18,6 +17,10 @@ exports.getAllTours = async (req, res) => {
     // (Tour.find():from mongoose,req.query: from express)
     //add filter() functionality to APIFeatures instance
     //filter() also instantiate a new APIFeatures() obj, so can chain on the method
+
+    // populate reviews
+    // const features = new APIFeatures(Tour.find().populate('reviews'), req.query)
+
     const features = new APIFeatures(Tour.find(), req.query)
       .filter()
       .sort()
@@ -44,94 +47,94 @@ exports.getAllTours = async (req, res) => {
   }
 };
 
-exports.getTour = catchAsync(async (req, res, next) => {
-  // id from url parameter
-  //Tour.findById is shorthand for Tour.findOne({_id:req.params.id}),inside is filter obj
-
-  //only populate review field for getTour route
-  const tour = await Tour.findById(req.params.id).populate('reviews');
-
-  if (!tour) {
-    //stop execution, not move on to the next line
-    return next(new AppError('No tour found with that ID', 404));
-  }
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour,
-    },
-  });
+exports.getTour = factory.getOne(Tour, {
+  path: 'reviews',
 });
 
-exports.createTour = catchAsync(async (req, res, next) => {
-  //return a promise as well
-  //using data comes from post request
-  //newTour:  the newly created document already with the ID and everything
-  const newTour = await Tour.create(req.body);
-  res.status(201).json({
-    status: 'success',
-    data: {
-      tour: newTour,
-    },
-  });
+// exports.getTour = catchAsync(async (req, res, next) => {
+//   // id from url parameter
+//   //Tour.findById is shorthand for Tour.findOne({_id:req.params.id}),inside is filter obj
 
-  // try {
+//   //only populate review field for getTour route
+//   const tour = await Tour.findById(req.params.id).populate('reviews');
 
-  // } catch (error) {
-  //   //fail to create document, send back a response to notify
-  //   res.status(400).json({
-  //     status: 'fail',
-  //     message: error,
-  //   });
-  // }
-});
+//   if (!tour) {
+//     //stop execution, not move on to the next line
+//     return next(new AppError('No tour found with that ID', 404));
+//   }
 
-exports.patchTour = catchAsync(async (req, res, next) => {
-  //you would have to get tour from the JSON file,
-  // than change that tour and then save it again to the file.
-  // const { id } = req.params; // id is string
+//   res.status(200).json({
+//     status: 'success',
+//     data: {
+//       tour,
+//     },
+//   });
+// });
 
-  const updatedTour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
-    // the new updated document is the one that will be returned.
-    new: true,
-    //run validators in the schema
-    runValidators: true,
-  });
+exports.createTour = factory.createOne(Tour);
 
-  if (!updatedTour) {
-    //stop execution, not move on to the next line
-    return next(new AppError('No tour found with that ID', 404));
-  }
+// exports.createTour = catchAsync(async (req, res, next) => {
+//   //return a promise as well
+//   //using data comes from post request
+//   //newTour:  the newly created document already with the ID and everything
+//   const newTour = await Tour.create(req.body);
+//   res.status(201).json({
+//     status: 'success',
+//     data: {
+//       tour: newTour,
+//     },
+//   });
+// });
 
-  res.status(200).json({
-    status: 'successful',
-    data: {
-      tour: updatedTour,
-    },
-  });
-});
+exports.patchTour = factory.updateOne(Tour);
 
-exports.deleteTour = catchAsync(async (req, res, next) => {
-  // const { id } = req.params; // id is string
+// exports.patchTour = catchAsync(async (req, res, next) => {
+//   //you would have to get tour from the JSON file,
+//   // than change that tour and then save it again to the file.
+//   // const { id } = req.params; // id is string
 
-  // in a RESTful API, it is a common practice not
-  // to send back any data to the client
-  //when there was a delete operation
-  const tour = await Tour.findByIdAndDelete(req.params.id);
+//   const updatedTour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
+//     // the new updated document is the one that will be returned.
+//     new: true,
+//     //run validators in the schema
+//     runValidators: true,
+//   });
 
-  if (!tour) {
-    //stop execution, not move on to the next line
-    return next(new AppError('No tour found with that ID', 404));
-  }
+//   if (!updatedTour) {
+//     //stop execution, not move on to the next line
+//     return next(new AppError('No tour found with that ID', 404));
+//   }
 
-  res.status(204).json({
-    status: 'successful',
-    data: {
-      tour: null,
-    },
-  });
-});
+//   res.status(200).json({
+//     status: 'successful',
+//     data: {
+//       tour: updatedTour,
+//     },
+//   });
+// });
+
+exports.deleteTour = factory.deleteOne(Tour);
+
+// exports.deleteTour = catchAsync(async (req, res, next) => {
+//   // const { id } = req.params; // id is string
+
+//   // in a RESTful API, it is a common practice not
+//   // to send back any data to the client
+//   //when there was a delete operation
+//   const tour = await Tour.findByIdAndDelete(r  eq.params.id);
+
+//   if (!tour) {
+//     //stop execution, not move on to the next line
+//     return next(new AppError('No tour found with that ID', 404));
+//   }
+
+//   res.status(204).json({
+//     status: 'successful',
+//     data: {
+//       tour: null,
+//     },
+//   });
+// });
 
 //aggregation pipeline
 exports.getTourStats = async (req, res) => {

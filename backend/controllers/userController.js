@@ -1,6 +1,7 @@
 const User = require('../models/userModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
+const factory = require('./handlerFactory');
 
 //return a filtered obj with only allowed fields
 const filterObj = (obj, ...allowedFields) => {
@@ -92,16 +93,7 @@ exports.createUser = (req, res) => {
 };
 
 // an administrator to update all of the user data,
-exports.updateUser = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'this route is not defined',
-  });
-};
+//not for password
+exports.updateUser = factory.updateOne(User);
 
-exports.deleteUser = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'this route is not defined',
-  });
-};
+exports.deleteUser = factory.deleteOne(User);

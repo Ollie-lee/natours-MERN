@@ -11,6 +11,7 @@ const reviewRouter = express.Router({
 });
 
 //post /tours/xxxx/reviews
+//get /tours/xxxx/reviews
 //post /reviews
 
 reviewRouter
@@ -19,7 +20,13 @@ reviewRouter
   .post(
     authController.protect,
     authController.restrictTo('user'),
+    reviewController.setTourUserIds,
     reviewController.createReview
   );
+
+reviewRouter
+  .route('/:id')
+  .patch(reviewController.updateReview)
+  .delete(reviewController.deleteReview);
 
 module.exports = reviewRouter;
