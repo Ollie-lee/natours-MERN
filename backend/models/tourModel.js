@@ -152,6 +152,19 @@ const tourSchema = new mongoose.Schema(
   }
 );
 
+tourSchema.index({
+  price:
+    //1 means that we're sorting the price index in an ascending order,
+    //-1 means descending order
+    1,
+  ratingsAverage: -1,
+});
+
+//most times the one or minus one is not that important.
+tourSchema.index({
+  slug: 1,
+});
+
 //define virtual property
 tourSchema.virtual('durationWeeks').get(function () {
   //use regular function. not using arrow function here
