@@ -15,21 +15,30 @@ const filterObj = (obj, ...allowedFields) => {
   return newObj;
 };
 
-exports.getAllUsers = catchAsync(async (req, res) => {
-  //return back  all documents
-  //return a query obj, and we execute directly
-  const users = await User.find();
+exports.getAllUsers = factory.getAll(User);
 
-  //route handler
-  //send response
-  res.status(200).json({
-    status: 'success',
-    results: users.length,
-    data: {
-      users,
-    },
-  });
-});
+// exports.getAllUsers = catchAsync(async (req, res) => {
+//   //return back  all documents
+//   //return a query obj, and we execute directly
+//   const users = await User.find();
+
+//   //route handler
+//   //send response
+//   res.status(200).json({
+//     status: 'success',
+//     results: users.length,
+//     data: {
+//       users,
+//     },
+//   });
+// });
+
+exports.getMe = (req, res, next) => {
+  //getMe do not need to specify id in url, so we add it from req.user
+  //add this middleware before calling getOne
+  req.params.id = req.user.id;
+  next();
+};
 
 //update the currently authenticated user's email and
 exports.updateMe = catchAsync(async (req, res, next) => {
@@ -78,12 +87,7 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getUser = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'this route is not defined',
-  });
-};
+exports.getUser = factory.getOne(User);
 
 exports.createUser = (req, res) => {
   res.status(500).json({

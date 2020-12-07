@@ -1,5 +1,6 @@
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const APIFeatures = require('../utils/apiFeatures');
 
 exports.deleteOne = (Model) =>
   catchAsync(async (req, res, next) => {
@@ -65,18 +66,11 @@ exports.createOne = (Model) =>
 exports.getOne = (Model, popOptions) =>
   catchAsync(async (req, res, next) => {
     let query = Model.findById(req.params.id);
+    //for population
     if (popOptions) {
       query = query.populate(popOptions);
     }
     const doc = await query;
-    console.log(
-      '🚀 ~ file: handlerFactory.js ~ line 88 ~ catchAsync ~ query',
-      query
-    );
-    console.log(
-      '🚀 ~ file: handlerFactory.js ~ line 89 ~ catchAsync ~ doc',
-      doc
-    );
 
     // id from url parameter
     // const doc = await Model.findById(req.params.id).populate('reviews');
@@ -90,6 +84,43 @@ exports.getOne = (Model, popOptions) =>
       status: 'success',
       data: {
         data: doc,
+      },
+    });
+  });
+
+exports.getAll = (Model) =>
+  catchAsync(async (req, res) => {
+    //access all methods in the class
+    // (Model.find():from mongoose,req.query: from express)
+    //add filter() functionality to APIFeatures instance
+    //filter() also instantiate a new APIFeatures() obj, so can chain on the method
+
+    // populate reviews
+    // const features = new APIFeatures(Model.find().populate('reviews'), req.query)
+
+    //for nested GET reviews on tour
+    let filter = {};
+    //thanks for params merging in review router
+    if (req.params.tourId) {
+      filter = { tour: req.params.tourId };
+    }
+
+    const features = new APIFeatures(Model.find(filter), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .pagination();
+
+    //return back  all documents
+    const docs = await features.query;
+
+    //route handler
+    //send response
+    res.status(200).json({
+      status: 'success',
+      results: docs.length,
+      data: {
+        data: docs,
       },
     });
   });

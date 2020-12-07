@@ -27,20 +27,34 @@ tourRouter
   .get(tourController.aliasTopTours, tourController.getAllTours);
 
 //for aggregate pipeline
-tourRouter.route('/monthly-plan/:year').get(tourController.getMonthlyPlan);
+tourRouter
+  .route('/monthly-plan/:year')
+  .get(
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide', 'guide'),
+    tourController.getMonthlyPlan
+  );
 tourRouter.route('/tour-stats').get(tourController.getTourStats);
 
 tourRouter
   .route('/')
-  .get(authController.protect, tourController.getAllTours) //route handler, middleware, controller
+  .get(tourController.getAllTours) //route handler, middleware, controller
   //when we have a post request for this route,
   // it will then run the first middleware first and only then the createTour.
-  .post(tourController.createTour);
+  .post(
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide'),
+    tourController.createTour
+  );
 
 tourRouter
   .route('/:id')
   .get(tourController.getTour)
-  .patch(tourController.patchTour)
+  .patch(
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide'),
+    tourController.patchTour
+  )
   //always check if a user is logged in
   //only admin and lead-guide can delete a tour
   .delete(

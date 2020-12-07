@@ -15,14 +15,26 @@ userRouter.post('/forgotPassword', authController.forgetPassword);
 //receive the token as well as the new password.
 userRouter.patch('/resetPassword/:token', authController.resetPassword);
 
-userRouter.patch(
-  '/updateMyPassword',
-  authController.protect,
-  authController.updatePassword
-);
+// middleware runs always in sequence, and router here is mini application
+//we can use middleware on this router as well.
+//here is to basically protect all the routes that come after this point.
+//after middlewares above, then the next middleware in the stack is this protect.
+//so middlewares below are now protected
+userRouter.use(authController.protect);
 
-userRouter.patch('/updateMe', authController.protect, userController.updateMe);
-userRouter.delete('/deleteMe', authController.protect, userController.deleteMe);
+userRouter.patch('/updateMyPassword', authController.updatePassword);
+
+userRouter.get(
+  '/me',
+  //faking id comes from url
+  userController.getMe,
+  userController.getUser
+);
+userRouter.patch('/updateMe', userController.updateMe);
+userRouter.delete('/deleteMe', userController.deleteMe);
+
+//only admin can delete and create user... below
+userRouter.use(authController.restrictTo('admin'));
 
 //User Route
 //can be used for admin

@@ -1,5 +1,4 @@
 const Tour = require('../models/tourModel');
-const APIFeatures = require('../utils/apiFeatures');
 const factory = require('./handlerFactory');
 
 //the third parameter of middleware is next
@@ -11,41 +10,36 @@ exports.aliasTopTours = (req, res, next) => {
   next();
 };
 
-exports.getAllTours = async (req, res) => {
-  try {
-    //access all methods in the class
-    // (Tour.find():from mongoose,req.query: from express)
-    //add filter() functionality to APIFeatures instance
-    //filter() also instantiate a new APIFeatures() obj, so can chain on the method
+exports.getAllTours = factory.getAll(Tour);
 
-    // populate reviews
-    // const features = new APIFeatures(Tour.find().populate('reviews'), req.query)
+// exports.getAllTours = catchAsync(async (req, res) => {
+//   //access all methods in the class
+//   // (Tour.find():from mongoose,req.query: from express)
+//   //add filter() functionality to APIFeatures instance
+//   //filter() also instantiate a new APIFeatures() obj, so can chain on the method
 
-    const features = new APIFeatures(Tour.find(), req.query)
-      .filter()
-      .sort()
-      .limitFields()
-      .pagination();
+//   // populate reviews
+//   // const features = new APIFeatures(Tour.find().populate('reviews'), req.query)
 
-    //return back  all documents
-    const tours = await features.query;
+//   const features = new APIFeatures(Tour.find(), req.query)
+//     .filter()
+//     .sort()
+//     .limitFields()
+//     .pagination();
 
-    //route handler
-    //send response
-    res.status(200).json({
-      status: 'success',
-      results: tours.length,
-      data: {
-        tours,
-      },
-    });
-  } catch (error) {
-    res.status('404').json({
-      status: 'fail',
-      message: error,
-    });
-  }
-};
+//   //return back  all documents
+//   const tours = await features.query;
+
+//   //route handler
+//   //send response
+//   res.status(200).json({
+//     status: 'success',
+//     results: tours.length,
+//     data: {
+//       tours,
+//     },
+//   });
+// });
 
 exports.getTour = factory.getOne(Tour, {
   path: 'reviews',
