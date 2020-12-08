@@ -25,6 +25,8 @@ const tourSchema = new mongoose.Schema(
       default: 4.5,
       min: [1, 'Rating must be above 1.0'],
       max: [5, 'Rating must be below 5.0'],
+      //this function will be run each time that a new value is set for this field,
+      set: (val) => Math.round(val * 10) / 10, //4.6666*10 => 46.666 => 47 => 4.7
     },
     ratingsQuantity: {
       type: Number,
@@ -165,6 +167,10 @@ tourSchema.index({
   slug: 1,
 });
 
+//for geospatial data query
+//startLocation location here should be indexed to a 2D sphere.
+tourSchema.index({ startLocation: '2dsphere' });
+
 //define virtual property
 tourSchema.virtual('durationWeeks').get(function () {
   //use regular function. not using arrow function here
@@ -245,13 +251,14 @@ tourSchema.pre(/^find/, function (next) {
 });
 
 //AGGREGATION MIDDLEWARE
-tourSchema.pre('aggregate', function (next) {
-  //all we have to do is to add another match stage right at the beginning of this pipeline array,
-  //unshift add element to start of the array, shift add element to end of the array
-  this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
-  console.log(this.pipeline());
-  next();
-});
+// tourSchema.pre('aggregate', function (next) {
+//   //all we have to do is to add another match stage right at the beginning of this pipeline array,
+//   //unshift add element to start of the array, shift add element to end of the array
+//   this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+//   //see the whole aggregation stage pipeline
+//   console.log(this.pipeline());
+//   next();
+// });
 
 // //can have multiple same middleware
 // tourSchema.pre('save', function (next) {

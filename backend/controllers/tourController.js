@@ -1,4 +1,6 @@
 const Tour = require('../models/tourModel');
+const AppError = require('../utils/appError');
+const catchAsync = require('../utils/catchAsync');
 const factory = require('./handlerFactory');
 
 //the third parameter of middleware is next
@@ -286,3 +288,110 @@ exports.getMonthlyPlan = async (req, res) => {
     });
   }
 };
+
+//'/tours-within/:distance/center/:latlng/unit/:unit'
+//another format: /tours-within?distance=233&center=-40,45&unit=mi
+exports.getToursWithin = catchAsync(async (req, res, next) => {
+  const { distance, latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',');
+
+  //the radius is basically the distance that we want to have as the radius,
+  //but converted to a special unit called radians.
+  //And in order to get the radians, we need to divide our distance by the radius of the earth
+  const radius = unit === 'mi' ? distance / 3963.2 : distance / 6378.1; //radius of the earth by mile/kilometer
+
+  if (!lat || !lng) {
+    next(
+      new AppError(
+        'Please provide latitude and longitude in the format lat,lng',
+        400
+      )
+    );
+  }
+
+  // start location field is what holds the geospatial point where each tour starts
+  //And so that's exactly what we're searching for.
+  const tours = await Tour.find({
+    //remember to add an index to the field where the geospatial data that we're searching for is stored.
+    startLocation:
+      //the value that we're searching for
+      {
+        $geoWithin: {
+          $centerSphere:
+            //center sphere operator takes an array of the coordinates and the single radius.
+            [[lng, lat], radius],
+        },
+      },
+  });
+
+  res.status(200).json({
+    status: 'success',
+    results: tours.length,
+    data: {
+      data: tours,
+    },
+  });
+});
+
+//'/distances/:latlng/unit/:unit'
+exports.getDistances = catchAsync(async (req, res, next) => {
+  const { latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',');
+
+  //mile OR kilometer
+  const multiplier = unit === 'mi' ? 0.000621371 : 0.001;
+
+  if (!lat || !lng) {
+    next(
+      new AppError(
+        'Please provide latitude and longitude in the format lat,lng',
+        400
+      )
+    );
+  }
+
+  const distances = await Tour.aggregate([
+    //geoNear stage
+    //this is the only geospatial aggregation pipeline stage that actually exists.
+    //This one always needs to be the first one in the pipeline.
+    {
+      //we're using this startLocation in order to calculate the distances,
+      $geoNear: {
+        //it requires that at least one of our fields contains a geospatial index.
+        //If there's only one field with a geospatial index, then this geoNear stage here will automatically use
+        //that index in order to perform the calculation.
+        //But if you have multiple fields with geospatial indexes, then you need to use the keys parameter
+        //in order to define the field that you want to use for calculations.
+
+        // near is the point from which to calculate the distances.
+        //So all the distances will be calculated from this point
+        //that we define here, and then all the start locations.
+        //here is the point we pass in url, in the format of geoJson
+        near: {
+          type: 'Point',
+          //convert to numbers
+          coordinates: [lng * 1, lat * 1],
+        },
+        //this is the name of the field that will be created and where all the calculated distances will be stored.
+        distanceField: 'distance',
+        //specify a number which is then going to be multiplied with all the distances.
+        //default res is meter, convert to mile OR kilometer
+        distanceMultiplier: multiplier,
+      },
+    },
+    {
+      $project: {
+        // select distance and name field
+        distance: 1,
+        name: 1,
+      },
+    },
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: distances,
+    },
+  });
+});

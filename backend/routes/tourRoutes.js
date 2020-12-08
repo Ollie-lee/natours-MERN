@@ -36,6 +36,16 @@ tourRouter
   );
 tourRouter.route('/tour-stats').get(tourController.getTourStats);
 
+//another format: /tours-within?distance=233&center=-40,45&unit=mi
+tourRouter
+  .route('/tours-within/:distance/center/:latlng/unit/:unit')
+  .get(tourController.getToursWithin);
+
+// calculate the distance from a certain point to all the tours
+tourRouter
+  .route('/distances/:latlng/unit/:unit')
+  .get(tourController.getDistances);
+
 tourRouter
   .route('/')
   .get(tourController.getAllTours) //route handler, middleware, controller

@@ -109,6 +109,9 @@ reviewSchema.post('save', function () {
   this.constructor.calcAverageRatings(this.tour);
 });
 
+// add unique index to make sure one user can review a tour once
+reviewSchema.index({ tour: 1, user: 1 }, { unique: true });
+
 //findByIdAndUpdate
 //findByIdAndDelete
 //findByIdAndUpdate is only just a shorthand for findOneAndUpdate with the current ID
