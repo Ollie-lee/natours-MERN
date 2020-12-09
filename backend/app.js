@@ -11,6 +11,7 @@ const path = require('path');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
+const viewRouter = require('./routes/viewRoutes');
 const globalErrorHandler = require('./controllers/errorController');
 const AppError = require('./utils/appError');
 
@@ -102,14 +103,7 @@ app.use((req, res, next) => {
 });
 
 // Routes
-
-//app.get, which for rendering pages in a browser is usually always the one that we use,
-app.get('/', (req, res) => {
-  // render will then render the template with the name that we pass in,
-  //these passed data is called locals in the Pug file.
-  res.status(200).render('base', { tour: 'The Forest Hiker', user: 'Ollie' });
-});
-
+app.use('/', viewRouter);
 // use tourRouter middleware for "/api/v1/tours" this specific route
 // we define a sub app(router) for each resource i.e. define a router for each resource
 // mounting a new router on a route
