@@ -30,6 +30,8 @@ app.set('views', path.join(__dirname, 'views'));
 // express.json() is also called body-parser
 
 //serving static files
+//define that all the static assets, will always automatically be served
+//from a folder called public
 // app.use(express.static(`${__dirname}/public`));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -104,7 +106,8 @@ app.use((req, res, next) => {
 //app.get, which for rendering pages in a browser is usually always the one that we use,
 app.get('/', (req, res) => {
   // render will then render the template with the name that we pass in,
-  res.status(200).render('base');
+  //these passed data is called locals in the Pug file.
+  res.status(200).render('base', { tour: 'The Forest Hiker', user: 'Ollie' });
 });
 
 // use tourRouter middleware for "/api/v1/tours" this specific route
